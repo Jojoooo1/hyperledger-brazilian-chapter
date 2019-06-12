@@ -1,0 +1,12 @@
+{
+  "extends": "airbnb-base",
+  "rules": {
+    "comma-dangle": ["error", "never"],
+    "no-console": "off",
+    "no-mixed-operators": 0,
+    "max-len": "off",
+    "class-methods-use-this": "off",
+    "dot-notation": "off",
+    "arrow-parens": ["error", "as-needed"]
+  }
+}
