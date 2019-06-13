@@ -1,5 +1,7 @@
 # Material created for the first-ever Hyperledger Bootcamp in Latin America
 
+![Hyperledger fabric](https://www.hyperledger.org/wp-content/uploads/2018/10/Hyperledger-Fabric.png)
+
 ## introduction-chaincode
 
 Folder containing:
