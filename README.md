@@ -1,6 +1,6 @@
 # Material created for the first-ever Hyperledger Bootcamp in Latin America
 
-## introduction-chaincode
+## Chaincode
 
 Folder containing:
 
@@ -8,7 +8,7 @@ Folder containing:
 * A chaincode example
 * Scripts to start and reset the chaincode example
 
-## introduction-network
+## Network
 
 Folder containing:
 
@@ -21,7 +21,7 @@ Folder containing:
   * `docker-compose-cli.yaml` containing certificate authorities, peers, cli and the first orderer
   * `docker-compose-etcdraft2.yaml` containing the others orderers
 
-## introduction-node-sdk
+## Hyperledger Fabric Node.js SDK
 
 Folder containing:
 
