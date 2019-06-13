@@ -1,4 +1,4 @@
-# Material created for the first-ever Hyperledger Bootcamp in Latin America
+# Material created for the Hyperledger Brazilian chapter
 
 ![Hyperledger fabric](https://www.hyperledger.org/wp-content/uploads/2018/10/Hyperledger-Fabric.png)
 
