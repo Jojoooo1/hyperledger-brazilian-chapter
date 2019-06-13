@@ -6,9 +6,9 @@
 
 Folder containing:
 
-* Material to set up a dev-mode environment in order to quickly test and prototype your chaincode.
-* A chaincode example
-* Scripts to start and reset the chaincode example
+* Material to set up a dev-mode environment in order to quickly test and prototype your chaincode
+* A chaincode example named "organizacao"
+* A Scripts folder to start and reset the chaincode example
 
 ## introduction-network
 
@@ -28,9 +28,9 @@ Folder containing:
 Folder containing:
 
 * A config folder:
-  * crypto-config folder corresponding of the network running
+  * crypto-config folder corresponding to the network running
   * 1 connection profile `connection-profile-tls.json`
 * `enrollAdmin.js` to enroll an admin for Orgs1
 * `registerUser.js` to register a user for Orgs1
-* `invoke.js` to submit a transaction to the network
+* `invoke.js` to submit a transaction
 * `query.js` to query the ledger
