@@ -9,6 +9,7 @@ CONTAINER_IP=10.6.0.1:7052 # set in docker-composer
 
 DIR=$PWD
 cd ../../chaincode/$CHAINCODE_NAME_FOLDER
+npm install
 npm run build
 cd $DIR
 
