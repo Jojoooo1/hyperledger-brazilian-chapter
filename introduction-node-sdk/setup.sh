@@ -1,3 +1,5 @@
+# install packages
+npm install
 # Remove registered user
 rm -rf hfc/*
 # Remove crypto-config
