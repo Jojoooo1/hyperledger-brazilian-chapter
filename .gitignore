@@ -1,5 +1,5 @@
 introduction-node-sdk/hfc/*
 introduction-node-sdk/config/crypto-config/*
 
-introduction-network/config/crypto-config/*
-introduction-network/config/channel-artifacts/*
+introduction-network/crypto-config/*
+introduction-network/channel-artifacts/*
