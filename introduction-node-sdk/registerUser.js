@@ -39,17 +39,17 @@ async function registerUser() {
 
     // Register a new user and return the enrollment secret
     const secret = await fabric_ca_client.register(
-      { enrollmentID: 'user1', affiliation: 'org1.department1', role: 'client' },
+      { enrollmentID: 'user', affiliation: 'org1.department1', role: 'client' },
       admin
     );
     // Enroll a registered user in order to receive a signed X509 certificate
-    let enrollment = await fabric_ca_client.enroll({ enrollmentID: 'user1', enrollmentSecret: secret });
+    let enrollment = await fabric_ca_client.enroll({ enrollmentID: 'user', enrollmentSecret: secret });
 
     // Returns a User object with signing identities based on the private key and the corresponding x509 certificate.
     // This allows applications to use pre-existing crypto materials (private keys and certificates) to construct user
     // objects with signing capabilities, as an alternative to dynamically enrolling users with fabric-ca
     const user = await fabric_client.createUser({
-      username: 'user1',
+      username: 'user',
       mspid: 'Org1MSP',
       cryptoContent: { privateKeyPEM: enrollment.key.toBytes(), signedCertPEM: enrollment.certificate }
     });

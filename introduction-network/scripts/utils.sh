@@ -1,14 +1,15 @@
-# $1 i | $2 peer!=0
+# $1 organization index | $2 peer number
 setVariables() {
-  if [ $2 = 1 ]; then
-    PEER_NUMERO=$(($j - 1))
+  ORGANIZATION_INDEX=$1
+  if [ $2 -eq 0 ]; then # True if the lengh of STRING is zero
+    PEER_NUMBER=0
   else
-    PEER_NUMERO=0
+    PEER_NUMBER=$(($2 - 1)) # PEER_NUMBER start at 1 but PEER_NAME at 0
   fi
-  CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/${ORGANIZATION_DOMAIN[$1]}/users/Admin@${ORGANIZATION_DOMAIN[$1]}/msp
-  CORE_PEER_ADDRESS=peer${PEER_NUMERO}.${ORGANIZATION_DOMAIN[$1]}:7051
-  CORE_PEER_LOCALMSPID=${ORGANIZATION_MSPID[$1]}
-  CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/${ORGANIZATION_DOMAIN[$1]}/peers/peer${PEER_NUMERO}.${ORGANIZATION_DOMAIN[$1]}/tls/ca.crt
+  CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/${ORGANIZATION_DOMAIN[ORGANIZATION_INDEX]}/users/Admin@${ORGANIZATION_DOMAIN[ORGANIZATION_INDEX]}/msp
+  CORE_PEER_ADDRESS=peer${PEER_NUMBER}.${ORGANIZATION_DOMAIN[ORGANIZATION_INDEX]}:7051
+  CORE_PEER_LOCALMSPID=${ORGANIZATION_MSPID[ORGANIZATION_INDEX]}
+  CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/${ORGANIZATION_DOMAIN[ORGANIZATION_INDEX]}/peers/peer${PEER_NUMBER}.${ORGANIZATION_DOMAIN[ORGANIZATION_INDEX]}/tls/ca.crt
 }
 
 replaceCAPrivateKey() {
@@ -46,7 +47,7 @@ joinPeersTochannel() {
 
       # All peers join the channel
       for j in 1 ${ORGANIZATION_PEER_NUMBER[$i]}; do
-        setVariables $i 1
+        setVariables $i $j
         docker exec -it \
           -e "CORE_PEER_MSPCONFIGPATH=$CORE_PEER_MSPCONFIGPATH" \
           -e "CORE_PEER_ADDRESS=$CORE_PEER_ADDRESS" \
@@ -99,7 +100,7 @@ installChaincodeToPeers() {
       if [ ${ORGANIZATION_PEER_NUMBER[$i]} -gt 1 ]; then
 
         for j in 1 ${ORGANIZATION_PEER_NUMBER[$i]}; do
-          setVariables $i 1
+          setVariables $i $j
           docker exec -it \
             -e "CORE_PEER_MSPCONFIGPATH=$CORE_PEER_MSPCONFIGPATH" \
             -e "CORE_PEER_ADDRESS=$CORE_PEER_ADDRESS" \
@@ -152,7 +153,7 @@ initializeChaincodeContainer() {
           docker exec -it cli sh -c "\
           CORE_PEER_ADDRESS=peer$(($j - 1)).${ORGANIZATION_DOMAIN[0]}:7051 \
           CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/${ORGANIZATION_DOMAIN[0]}/peers/peer$(($j - 1)).${ORGANIZATION_DOMAIN[0]}/tls/ca.crt \
-          peer chaincode query -C $CHANNEL_NAME -n ${CHAINCODE_NAME[$i]} -c '{\"Args\":[\"getHistory\", \"instantiate\"]}' \
+          peer chaincode query -C $CHANNEL_NAME -n ${CHAINCODE_NAME[$i]} -c '{\"Args\":[\"getDataById\", \"instantiate\"]}' \
           "
         fi
       done
@@ -165,9 +166,8 @@ initializeChaincodeContainer() {
 # initializeChaincodeContainerWithPrivateCollection() {}
 
 startChaincodeContainer() {
-  # if instantiating ORG SERVER remove 1st value in array because already been initialized in initializeChaincodeContainer
-  # It remove first Org from var for not trying to start it again (usefull when trying to start from multiple server)
-  if [ $INSTANTIATING_PEER = true ]; then
+  # if INSTANTIATING_HOST remove 1st value in array because already been initialized in initializeChaincodeContainer
+  if [ $INSTANTIATING_HOST = true ]; then
     ORGANIZATIONS=("${ORGANIZATION_DOMAIN[@]:1}")
     PEER_NUMBER=("${ORGANIZATION_PEER_NUMBER[@]:1}")
     MSP_ID=("${ORGANIZATION_MSPID[@]:1}")
@@ -180,24 +180,24 @@ startChaincodeContainer() {
   for k in ${!CHAINCODE_NAME[@]}; do
     for i in ${!ORGANIZATIONS[@]}; do
 
-      if [ ${PEER_NUMBER[$i]} -gt 1 ]; then # if more than 0 peers set peer
+      if [ ${PEER_NUMBER[$i]} -gt 1 ]; then # if peers number > 1
         for j in 1 ${PEER_NUMBER[$i]}; do
-          setVariables $i 1
-          docker exec -it \
-            -e "CORE_PEER_MSPCONFIGPATH=$CORE_PEER_MSPCONFIGPATH" \
-            -e "CORE_PEER_ADDRESS=$CORE_PEER_ADDRESS" \
-            -e "CORE_PEER_LOCALMSPID=$CORE_PEER_LOCALMSPID" \
-            -e "CORE_PEER_TLS_ROOTCERT_FILE=$CORE_PEER_TLS_ROOTCERT_FILE" \
-            cli sh -c "peer chaincode query -C $CHANNEL_NAME -n ${CHAINCODE_NAME[$k]} -c '{\"Args\":[\"getHistory\", \"instantiate\"]}' && sleep 2"
+          docker exec -it cli sh -c "\
+        CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/${ORGANIZATIONS[$i]}/users/Admin@${ORGANIZATIONS[$i]}/msp \
+        CORE_PEER_ADDRESS=peer$(($j - 1)).${ORGANIZATIONS[$i]}:7051 \
+        CORE_PEER_LOCALMSPID=${MSP_ID[$i]} \
+        CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/${ORGANIZATIONS[$i]}/peers/peer$(($j - 1)).${ORGANIZATIONS[$i]}/tls/ca.crt \
+        peer chaincode query -C $CHANNEL_NAME -n ${CHAINCODE_NAME[$k]} -c '{\"Args\":[\"getDataById\", \"instantiate\"]}' && sleep 2 \
+        "
         done
       else
-        setVariables $i 0
-        docker exec -it \
-          -e "CORE_PEER_MSPCONFIGPATH=$CORE_PEER_MSPCONFIGPATH" \
-          -e "CORE_PEER_ADDRESS=$CORE_PEER_ADDRESS" \
-          -e "CORE_PEER_LOCALMSPID=$CORE_PEER_LOCALMSPID" \
-          -e "CORE_PEER_TLS_ROOTCERT_FILE=$CORE_PEER_TLS_ROOTCERT_FILE" \
-          cli sh -c "peer chaincode query -C $CHANNEL_NAME -n ${CHAINCODE_NAME[$k]} -c '{\"Args\":[\"getHistory\", \"instantiate\"]}' && sleep 2"
+        docker exec -it cli sh -c "\
+      CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/${ORGANIZATIONS[$i]}/users/Admin@${ORGANIZATIONS[$i]}/msp \
+      CORE_PEER_ADDRESS=peer0.${ORGANIZATIONS[$i]}:7051 \
+      CORE_PEER_LOCALMSPID=${MSP_ID[$i]} \
+      CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/${ORGANIZATIONS[$i]}/peers/peer0.${ORGANIZATIONS[$i]}/tls/ca.crt \
+      peer chaincode query -C $CHANNEL_NAME -n ${CHAINCODE_NAME[$k]} -c '{\"Args\":[\"getDataById\", \"instantiate\"]}' && sleep 2 \
+      "
       fi
 
     done

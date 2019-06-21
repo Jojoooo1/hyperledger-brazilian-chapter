@@ -34,11 +34,11 @@ async function invoke() {
 
     // get the enrolled user from persistence and assign to the client instance
     //    this user will sign all requests for the fabric network
-    const user = await fabric_client.getUserContext('user2', true);
+    const user = await fabric_client.getUserContext('user', true);
     if (user && user.isEnrolled()) {
-      console.log('Successfully loaded "user1" from user store');
+      console.log('Successfully loaded "user" from user store');
     } else {
-      throw new Error('\n\nFailed to get user1.... run registerUser.js');
+      throw new Error('\n\nFailed to get user.... run registerUser.js');
     }
 
     console.log('Successfully setup client side');
@@ -50,16 +50,15 @@ async function invoke() {
       //targets : --- letting this default to the peers assigned to the channel
       chaincodeId: 'organizacao',
       fcn: 'getDataById',
-      args: ['test3']
+      args: ['test']
     };
 
     // send the query proposal to the peer
     const response = await channel.queryByChaincode(request);
-    console.log(response.toString());
-
+    console.log(response.toString('utf-8'));
+    console.log('\n\n --- invoke.js - end');
     return;
   } catch (error) {
     console.log('Unable to invoke ::' + error.toString());
   }
-  console.log('\n\n --- invoke.js - end');
 }
