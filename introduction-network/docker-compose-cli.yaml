@@ -32,15 +32,15 @@ services:
       - FABRIC_CA_SERVER_CA_NAME=ca.org1.example.com
       # - FABRIC_CA_SERVER_REGISTRY_MAXENROLLMENTS=1 # only allow to register one admin
       - FABRIC_CA_SERVER_CA_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca/ca.org1.example.com-cert.pem # default $HOME/ca-key.pem
-      - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/ca/CA0_PRIVATE_KEY # default $HOMEca-cert.pem | + msp/keystore
-      - FABRIC_CA_SERVER_TLS_ENABLED=$CA_TLS_ENABLED # Creates folder in msp: cacerts/signcerts/user + add 1 msp/keystore | default tls cert $HOME/tls-cert.pem
+      - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/ca/CA0_PRIVATE_KEY # default $HOME/ca-cert.pem
+      - FABRIC_CA_SERVER_TLS_ENABLED=$CA_TLS_ENABLED # default tls cert $HOME/tls-cert.pem
       # - FABRIC_CA_SERVER_TLS_CLIENTAUTH_TYPE=
       # - FABRIC_CA_SERVER_TLS_CLIENTAUTH_CERTFILES=
       # - FABRIC_CA_SERVER_TLS_CERTFILE=/etc/hyperledger/fabric-ca-server-tls/cert.pem
       # - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-tls/key.pem
     ports:
       - 7054:7054
-    # -b :bootstrap identity is required to start the Fabric CA server; this identity is the server administrator. It creates folders in $HOME/msp
+    # -b :bootstrap identity is required to start the Fabric CA server; this identity is the server administrator.
     command: sh -c 'fabric-ca-server start -b admin:adminpw'
     volumes:
       - ./crypto-config/peerOrganizations/org1.example.com/ca/:/etc/hyperledger/fabric-ca-server-config/ca
@@ -55,8 +55,8 @@ services:
       - FABRIC_CA_SERVER_CA_NAME=ca.org2.example.com
       # - FABRIC_CA_SERVER_REGISTRY_MAXENROLLMENTS=1 # only allow to register one admin
       - FABRIC_CA_SERVER_CA_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca/ca.org2.example.com-cert.pem # default $HOME/ca-key.pem
-      - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/ca/CA1_PRIVATE_KEY # default $HOMEca-cert.pem | + msp/keystore
-      - FABRIC_CA_SERVER_TLS_ENABLED=$CA_TLS_ENABLED # Creates folder in msp: cacerts/signcerts/user + add 1 msp/keystore | default tls cert $HOME/tls-cert.pem
+      - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/ca/CA1_PRIVATE_KEY # default $HOME/ca-cert.pem 
+      - FABRIC_CA_SERVER_TLS_ENABLED=$CA_TLS_ENABLED # default tls cert $HOME/tls-cert.pem
       # - FABRIC_CA_SERVER_TLS_CLIENTAUTH_TYPE=
       # - FABRIC_CA_SERVER_TLS_CLIENTAUTH_CERTFILES=
       # - FABRIC_CA_SERVER_TLS_CERTFILE=/etc/hyperledger/fabric-ca-server-tls/cert.pem
