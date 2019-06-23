@@ -76,8 +76,8 @@
       }
     },
     "peer0.org2.example.com": {
-      "url": "grpcs://localhost:8051",
-      "eventUrl": "grpcs://localhost:8053",
+      "url": "grpcs://localhost:9051",
+      "eventUrl": "grpcs://localhost:9053",
       "grpcOptions": {
         "ssl-target-name-override": "peer0.org2.example.com"
       },

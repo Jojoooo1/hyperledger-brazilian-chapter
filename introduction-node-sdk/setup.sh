@@ -1,3 +1,6 @@
+#!/bin/bash
+set -ev
+
 # install packages
 npm install
 # Remove registered user

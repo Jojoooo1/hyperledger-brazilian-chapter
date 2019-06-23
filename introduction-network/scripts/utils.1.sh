@@ -1,21 +1,15 @@
 # $1 organization index | $2 peer number
 setVariables() {
-  # set -x
-
   ORGANIZATION_INDEX=$1
-  PEER_NUMBER=$2
-  # PEER_NUMBER ($2) start at 1 (because of loop value) but PEER_NAME at 0 => do a subtraction
-  if [ -z "$PEER_NUMBER" -o "$PEER_NUMBER" = 0 ]; then PEER_NUMBER=0; else PEER_NUMBER=$(($2 - 1)); fi
+  PEER_INDEX=$2
 
-  PEER_PORT_INDEX=${ORGANIZATION_PEER_STARTING_PORT[$ORGANIZATION_INDEX]} # Gets starting port
-  PEER_PORT=$(($PEER_PORT_INDEX + $PEER_NUMBER * 1000))                   # Calc starting port + peer number
+  # If PEER_INDEX not passed = 0 && PEER_INDEX passed as params start at 1 but PEER_NAME at 0 => do a subtraction
+  if [ -z "$PEER_INDEX" -o "$PEER_INDEX" = 0 ]; then PEER_INDEX=0; else PEER_INDEX=$(($2 - 1)); fi
 
   CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/${ORGANIZATION_DOMAIN[ORGANIZATION_INDEX]}/users/Admin@${ORGANIZATION_DOMAIN[ORGANIZATION_INDEX]}/msp
-  CORE_PEER_ADDRESS=peer${PEER_NUMBER}.${ORGANIZATION_DOMAIN[ORGANIZATION_INDEX]}:$PEER_PORT
+  CORE_PEER_ADDRESS=peer${PEER_INDEX}.${ORGANIZATION_DOMAIN[ORGANIZATION_INDEX]}:7051
   CORE_PEER_LOCALMSPID=${ORGANIZATION_MSPID[ORGANIZATION_INDEX]}
-  CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/${ORGANIZATION_DOMAIN[ORGANIZATION_INDEX]}/peers/peer${PEER_NUMBER}.${ORGANIZATION_DOMAIN[ORGANIZATION_INDEX]}/tls/ca.crt
-
-  # set +x
+  CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/${ORGANIZATION_DOMAIN[ORGANIZATION_INDEX]}/peers/peer${PEER_INDEX}.${ORGANIZATION_DOMAIN[ORGANIZATION_INDEX]}/tls/ca.crt
 }
 
 replaceCAPrivateKey() {
@@ -52,7 +46,6 @@ joinPeersTochannel() {
 
     if [ ${ORGANIZATION_PEER_NUMBER[$i]} -gt 1 ]; then # if peers > 1
       for j in 1 ${ORGANIZATION_PEER_NUMBER[$i]}; do # loop every peer
-        echo VALEUR $i $j
         setVariables $i $j
         docker exec -it \
           -e "CORE_PEER_MSPCONFIGPATH=$CORE_PEER_MSPCONFIGPATH" \
@@ -70,6 +63,7 @@ joinPeersTochannel() {
         -e "CORE_PEER_TLS_ROOTCERT_FILE=$CORE_PEER_TLS_ROOTCERT_FILE" \
         cli sh -c "peer channel join -b ${CHANNEL_NAME}.block"
     fi
+
   done
 }
 
@@ -149,12 +143,8 @@ initializeChaincodeContainer() {
     if [ ${ORGANIZATION_PEER_NUMBER[0]} -gt 1 ]; then # if peer > 1
       for j in 1 ${ORGANIZATION_PEER_NUMBER[0]}; do # Loop every peer
         if [ $j -gt 1 ]; then # escape first value cause already started in instantiate command
-
-          PEER_NUMBER=$(($j - 1))
-          PEER_PORT=$((7051 + 1000 * $PEER_NUMBER)) # instantiating peer port start at 7051
-
           docker exec -it cli sh -c "\
-          CORE_PEER_ADDRESS=peer$PEER_NUMBER.${ORGANIZATION_DOMAIN[0]}:$PEER_PORT \
+          CORE_PEER_ADDRESS=peer$(($j - 1)).${ORGANIZATION_DOMAIN[0]}:7051 \
           CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/${ORGANIZATION_DOMAIN[0]}/peers/peer$(($j - 1)).${ORGANIZATION_DOMAIN[0]}/tls/ca.crt \
           peer chaincode query -C $CHANNEL_NAME -n ${CHAINCODE_NAME[$i]} -c '{\"Args\":[\"getDataById\", \"instantiate\"]}' \
           "
@@ -172,28 +162,27 @@ startChaincodeContainer() {
   # Remove 1st value because already instantiated in initializeChaincodeContainer()
   ORGANIZATIONS=("${ORGANIZATION_DOMAIN[@]:1}")
   PEER_NUMBER=("${ORGANIZATION_PEER_NUMBER[@]:1}")
+  MSP_ID=("${ORGANIZATION_MSPID[@]:1}")
 
   for k in ${!CHAINCODE_NAME[@]}; do # Loop every chaincode
     for i in ${!ORGANIZATIONS[@]}; do #  Loop every organization
 
-      ORGANIZATION_START_INDEX=$(($i + 1))
-
       if [ ${PEER_NUMBER[$i]} -gt 1 ]; then # if peer > 1
         for j in 1 ${PEER_NUMBER[$i]}; do # Loop every peer
-          setVariables $ORGANIZATION_START_INDEX $j
+          setVariables $i $j
           docker exec -it \
             -e "CORE_PEER_MSPCONFIGPATH=$CORE_PEER_MSPCONFIGPATH" \
             -e "CORE_PEER_ADDRESS=$CORE_PEER_ADDRESS" \
-            -e "CORE_PEER_LOCALMSPID=$CORE_PEER_LOCALMSPID" \
+            -e "CORE_PEER_LOCALMSPID=${MSP_ID[$i]}" \
             -e "CORE_PEER_TLS_ROOTCERT_FILE=$CORE_PEER_TLS_ROOTCERT_FILE" \
             cli sh -c "peer chaincode query -C $CHANNEL_NAME -n ${CHAINCODE_NAME[$k]} -c '{\"Args\":[\"getDataById\", \"instantiate\"]}' && sleep 2"
         done
       else
-        setVariables $ORGANIZATION_START_INDEX 0 # else only one
+        setVariables $i 0 # else only one
         docker exec -it \
           -e "CORE_PEER_MSPCONFIGPATH=$CORE_PEER_MSPCONFIGPATH" \
           -e "CORE_PEER_ADDRESS=$CORE_PEER_ADDRESS" \
-          -e "CORE_PEER_LOCALMSPID=$CORE_PEER_LOCALMSPID" \
+          -e "CORE_PEER_LOCALMSPID=${MSP_ID[$i]}" \
           -e "CORE_PEER_TLS_ROOTCERT_FILE=$CORE_PEER_TLS_ROOTCERT_FILE" \
           cli sh -c "peer chaincode query -C $CHANNEL_NAME -n ${CHAINCODE_NAME[$k]} -c '{\"Args\":[\"getDataById\", \"instantiate\"]}' && sleep 2"
       fi
