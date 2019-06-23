@@ -7,5 +7,6 @@ npm install
 rm -rf hfc/*
 # Remove crypto-config
 rm -rf config/crypto-config
+mkdir config/crypto-config
 # Copy network crypto-config
 cp -r ../introduction-network/crypto-config ./config

@@ -1,0 +1,1 @@
+{"version":3,"sources":["../app/index.js"],"names":["shim","start","Chaincode"],"mappings":";;AACA;;AACA;;;;AAFA;AAIAA,oBAAKC,KAAL,CAAW,IAAIC,kBAAJ,EAAX","sourcesContent":["// Testing mockup oblige to start new Chaincode in a separate file\nimport shim from 'fabric-shim';\nimport Chaincode from './chaincode';\n\nshim.start(new Chaincode());\n"],"file":"index.js"}
