@@ -30,6 +30,7 @@ function generateCert() {
   fi
 
   rm -Rf crypto-config
+  mkdir crypto-config
 
   set -x
   cryptogen generate --config=./$CRYPTO_CONFIG
