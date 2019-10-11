@@ -4,7 +4,7 @@ export CORE_PEER_TLS_ENABLED=true
 export CA_TLS_ENABLED=true
 
 # ----------------------
-# for keepings same utils file when using multiple host
+# for keepings same utils file when using multiple host
 # 1 = Instantiating chaincode host
 INSTANTIATING_HOST=true
 COMPOSE_FILE=docker-compose-cli.yaml

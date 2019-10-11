@@ -32,7 +32,7 @@ services:
       - FABRIC_CA_SERVER_CA_NAME=ca.org1.example.com
       # - FABRIC_CA_SERVER_REGISTRY_MAXENROLLMENTS=1 # only allow to register one admin
       - FABRIC_CA_SERVER_CA_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca/ca.org1.example.com-cert.pem # default $HOME/ca-key.pem
-      - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/ca/CA0_PRIVATE_KEY # default $HOME/ca-cert.pem
+      - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/ca/${CA0_PRIVATE_KEY} # default $HOME/ca-cert.pem
       - FABRIC_CA_SERVER_TLS_ENABLED=$CA_TLS_ENABLED # default tls cert $HOME/tls-cert.pem
       # - FABRIC_CA_SERVER_TLS_CLIENTAUTH_TYPE=
       # - FABRIC_CA_SERVER_TLS_CLIENTAUTH_CERTFILES=
@@ -55,7 +55,7 @@ services:
       - FABRIC_CA_SERVER_CA_NAME=ca.org2.example.com
       # - FABRIC_CA_SERVER_REGISTRY_MAXENROLLMENTS=1 # only allow to register one admin
       - FABRIC_CA_SERVER_CA_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca/ca.org2.example.com-cert.pem # default $HOME/ca-key.pem
-      - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/ca/CA1_PRIVATE_KEY # default $HOME/ca-cert.pem 
+      - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/ca/${CA1_PRIVATE_KEY} # default $HOME/ca-cert.pem 
       - FABRIC_CA_SERVER_TLS_ENABLED=$CA_TLS_ENABLED # default tls cert $HOME/tls-cert.pem
       # - FABRIC_CA_SERVER_TLS_CLIENTAUTH_TYPE=
       # - FABRIC_CA_SERVER_TLS_CLIENTAUTH_CERTFILES=

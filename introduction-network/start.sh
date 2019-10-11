@@ -7,18 +7,13 @@ set -ev
 
 DIR=$PWD
 
-# Replace private key for CA server
-replaceCAPrivateKey 1
-# replaceTLSPrivateKey 1
+# Loads CA private key
+loadCAPrivateKey
 
 # mount docker containers
 
 docker-compose -f $COMPOSE_FILE -f $COMPOSE_FILE_RAFT down
 docker-compose -f $COMPOSE_FILE -f $COMPOSE_FILE_RAFT up -d
-
-# Reput default value
-replaceCAPrivateKey 0
-# replaceTLSPrivateKey 0
 
 # wait for Hyperledger Fabric to start
 sleep 4

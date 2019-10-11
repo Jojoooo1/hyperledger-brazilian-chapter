@@ -5,7 +5,7 @@ setVariables() {
   ORGANIZATION_INDEX=$1
   PEER_NUMBER=$2
   # PEER_NUMBER ($2) start at 1 (because of loop value) but PEER_NAME at 0 => do a subtraction
-  if [ -z "$PEER_NUMBER" -o "$PEER_NUMBER" = 0 ]; then PEER_NUMBER=0; else PEER_NUMBER=$(($2 - 1)); fi
+  if [ -z "$PEER_NUMBER" ]; then PEER_NUMBER=0; fi
 
   PEER_PORT_INDEX=${ORGANIZATION_PEER_STARTING_PORT[$ORGANIZATION_INDEX]} # Gets starting port
   PEER_PORT=$(($PEER_PORT_INDEX + $PEER_NUMBER * 1000))                   # Calc starting port + peer number
@@ -35,6 +35,12 @@ replaceCAPrivateKey() {
   fi
 }
 
+loadCAPrivateKey() {
+  for i in ${!ORGANIZATION_DOMAIN[@]}; do # @ get all value of the array ${} exec the value ! represent the index
+    export CA${i}_PRIVATE_KEY=$(ls crypto-config/peerOrganizations/${ORGANIZATION_DOMAIN[$i]}/ca/*_sk | xargs -n1 basename)
+  done
+}
+
 createChannel() {
   if [ $CORE_PEER_TLS_ENABLED = true ]; then
     docker exec -it cli sh -c "\
@@ -49,27 +55,16 @@ createChannel() {
 
 joinPeersTochannel() {
   for i in ${!ORGANIZATION_DOMAIN[@]}; do # Loop every organization
-
-    if [ ${ORGANIZATION_PEER_NUMBER[$i]} -gt 1 ]; then # if peers > 1
-      for j in 1 ${ORGANIZATION_PEER_NUMBER[$i]}; do # loop every peer
-        echo VALEUR $i $j
-        setVariables $i $j
-        docker exec -it \
-          -e "CORE_PEER_MSPCONFIGPATH=$CORE_PEER_MSPCONFIGPATH" \
-          -e "CORE_PEER_ADDRESS=$CORE_PEER_ADDRESS" \
-          -e "CORE_PEER_LOCALMSPID=$CORE_PEER_LOCALMSPID" \
-          -e "CORE_PEER_TLS_ROOTCERT_FILE=$CORE_PEER_TLS_ROOTCERT_FILE" \
-          cli sh -c "peer channel join -b ${CHANNEL_NAME}.block"
-      done
-    else
-      setVariables $i 0 # else only one
+    for ((j = 0; j < ${ORGANIZATION_PEER_NUMBER[$i]}; j++)); do # loop every peer
+      setVariables $i $j
       docker exec -it \
         -e "CORE_PEER_MSPCONFIGPATH=$CORE_PEER_MSPCONFIGPATH" \
         -e "CORE_PEER_ADDRESS=$CORE_PEER_ADDRESS" \
         -e "CORE_PEER_LOCALMSPID=$CORE_PEER_LOCALMSPID" \
         -e "CORE_PEER_TLS_ROOTCERT_FILE=$CORE_PEER_TLS_ROOTCERT_FILE" \
         cli sh -c "peer channel join -b ${CHANNEL_NAME}.block"
-    fi
+    done
+
   done
 }
 
@@ -99,25 +94,15 @@ installChaincodeToPeers() {
   for k in ${!CHAINCODE_NAME[@]}; do # Loop every chaincode
     for i in ${!ORGANIZATION_DOMAIN[@]}; do # Loop every organization
 
-      if [ ${ORGANIZATION_PEER_NUMBER[$i]} -gt 1 ]; then # if peers > 1
-        for j in 1 ${ORGANIZATION_PEER_NUMBER[$i]}; do # loop every peer
-          setVariables $i $j
-          docker exec -it \
-            -e "CORE_PEER_MSPCONFIGPATH=$CORE_PEER_MSPCONFIGPATH" \
-            -e "CORE_PEER_ADDRESS=$CORE_PEER_ADDRESS" \
-            -e "CORE_PEER_LOCALMSPID=$CORE_PEER_LOCALMSPID" \
-            -e "CORE_PEER_TLS_ROOTCERT_FILE=$CORE_PEER_TLS_ROOTCERT_FILE" \
-            cli sh -c "peer chaincode install -n ${CHAINCODE_NAME[$k]} -v 1.0 -p ${CHAINECODE_PATH}${CHAINCODE_NAME[$k]} -l $LANGUAGE"
-        done
-      else
-        setVariables $i 0 # else only one
+      for ((j = 0; j < ${ORGANIZATION_PEER_NUMBER[$i]}; j++)); do # loop every peer
+        setVariables $i $j
         docker exec -it \
           -e "CORE_PEER_MSPCONFIGPATH=$CORE_PEER_MSPCONFIGPATH" \
           -e "CORE_PEER_ADDRESS=$CORE_PEER_ADDRESS" \
           -e "CORE_PEER_LOCALMSPID=$CORE_PEER_LOCALMSPID" \
           -e "CORE_PEER_TLS_ROOTCERT_FILE=$CORE_PEER_TLS_ROOTCERT_FILE" \
           cli sh -c "peer chaincode install -n ${CHAINCODE_NAME[$k]} -v 1.0 -p ${CHAINECODE_PATH}${CHAINCODE_NAME[$k]} -l $LANGUAGE"
-      fi
+      done
 
     done
   done
@@ -169,34 +154,24 @@ initializeChaincodeContainer() {
 # initializeChaincodeContainerWithPrivateCollection() {}
 
 startChaincodeContainer() {
-  # Remove 1st value because already instantiated in initializeChaincodeContainer()
-  ORGANIZATIONS=("${ORGANIZATION_DOMAIN[@]:1}")
-  PEER_NUMBER=("${ORGANIZATION_PEER_NUMBER[@]:1}")
+
+  ORGANIZATIONS=("${ORGANIZATION_DOMAIN[@]:1}")        # Remove 1st value because already instantiated in initializeChaincodeContainer()
+  PEER_NUMBER_SET=("${ORGANIZATION_PEER_NUMBER[@]:1}") # Remove 1st value because already instantiated in initializeChaincodeContainer()
 
   for k in ${!CHAINCODE_NAME[@]}; do # Loop every chaincode
     for i in ${!ORGANIZATIONS[@]}; do #  Loop every organization
 
-      ORGANIZATION_START_INDEX=$(($i + 1))
+      ORGANIZATION_START_INDEX=$(($i + 1)) # Loop will start at 1 because already instantiated in initializeChaincodeContainer()
 
-      if [ ${PEER_NUMBER[$i]} -gt 1 ]; then # if peer > 1
-        for j in 1 ${PEER_NUMBER[$i]}; do # Loop every peer
-          setVariables $ORGANIZATION_START_INDEX $j
-          docker exec -it \
-            -e "CORE_PEER_MSPCONFIGPATH=$CORE_PEER_MSPCONFIGPATH" \
-            -e "CORE_PEER_ADDRESS=$CORE_PEER_ADDRESS" \
-            -e "CORE_PEER_LOCALMSPID=$CORE_PEER_LOCALMSPID" \
-            -e "CORE_PEER_TLS_ROOTCERT_FILE=$CORE_PEER_TLS_ROOTCERT_FILE" \
-            cli sh -c "peer chaincode query -C $CHANNEL_NAME -n ${CHAINCODE_NAME[$k]} -c '{\"Args\":[\"getDataById\", \"instantiate\"]}' && sleep 2"
-        done
-      else
-        setVariables $ORGANIZATION_START_INDEX 0 # else only one
+      for ((j = 0; j < ${PEER_NUMBER_SET[$i]}; j++)); do # loop every peer
+        setVariables $ORGANIZATION_START_INDEX $j
         docker exec -it \
           -e "CORE_PEER_MSPCONFIGPATH=$CORE_PEER_MSPCONFIGPATH" \
           -e "CORE_PEER_ADDRESS=$CORE_PEER_ADDRESS" \
           -e "CORE_PEER_LOCALMSPID=$CORE_PEER_LOCALMSPID" \
           -e "CORE_PEER_TLS_ROOTCERT_FILE=$CORE_PEER_TLS_ROOTCERT_FILE" \
           cli sh -c "peer chaincode query -C $CHANNEL_NAME -n ${CHAINCODE_NAME[$k]} -c '{\"Args\":[\"getDataById\", \"instantiate\"]}' && sleep 2"
-      fi
+      done
 
     done
   done
